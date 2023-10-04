@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: Korean celebrities biographies API
+  version: 1.0.1
+servers:
+  - url: http://localhost:8000
+    description: dev server
+security:
+  - bearerAuth: []
+tags:
+  - name: posts
+  - name: user
+    
+paths:
+  /api/v1/men:
+    get:
+      tags:
+        - posts
+      summary: Get all posts
+      responses:
+        '200':
+          description: A list of posts
+          content:
+            application/json:
+              schema:
+                type: array  
+                items:
+                  $ref: '#/components/schemas/Posts'
+      security: []
+    post:
+      tags:
+        - posts
+      summary: Add a new post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/PostRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostResponse'          
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorised user can't create a new post
+  
+  /api/v1/men/{post_id}:
+    get:
+      tags:
+        - posts
+      summary: Find post by ID
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostResponse'          
+        '404':
+          description: Bad request
+      security: []
+    put:
+      tags:
+        - posts
+      summary: Update a post with new data
+      parameters:
+        - name: post_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/PostRequest'
+      responses:
+        '400':
+          description: Bad request
+        '405':
+          description: Validation exception          
+
+  /api/v1/mendelete/{post_id}:
+    delete:
+      tags:
+        - posts
+      summary: Delete a post
+      parameters:
+        - name: post_id
+          in: path
+          description: Post-ID to delete
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Succesfull operation
+        '401':
+          description: Unauthorised user
+        '403':
+          description: Access token does not have the required scope
+
+  /auth/token/login:
+    post:
+      tags:
+        - user
+      summary: Logs user into the system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/UserAuthorization'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '400':
+          description: Invalid username/password supplied
+  
+  /auth/token/logout:
+    get:
+      tags:
+        - user
+      summary: Logs out current logged in user
+      responses:
+        '204':
+          description: No content (successful logout)
+        
+
+components:
+  schemas:
+    PostRequest:
+      type: object
+      required:
+        - title
+        - content
+        - cat_id
+        - is_published
+      properties:
+        title:
+          type: string
+          description: Title of post that needs to be added
+          example: Kim Namjoon
+        content:
+          type: string
+          description: Content of post that needs to be added
+          example: 'Kim Namjoon is a leader of boyband BTS'
+        cat_id:
+          type: integer
+          description: ID of category that needs to be added
+          enum:
+          - 1
+          - 2
+          example: 1
+        is_published:
+          type: boolean
+          description: Boolean whether the post should be published
+          example: true
+    PostResponse:
+      type: object
+      properties:
+        post_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Kim Namjoon
+        content:
+          type: string
+          example: 'Kim Namjoon is a leader of boyband BTS'
+        cat_id:
+          type: integer
+          enum:
+          - 1
+          - 2
+          example: 1
+        is_published:
+          type: boolean
+        user_id:
+          type: integer
+          example: 1
+        time_create:
+          type: string
+          format: 2023-08-15T15:00:00+01
+        time_update:
+          type: string
+          format: 2023-08-15T15:00:00+01
+    Posts:
+      type: array
+      items:
+        $ref: '#/components/schemas/PostResponse'
+    UserAuthorization:
+      type: object
+      properties:
+        username:
+          type: string
+          example: theUser
+        password:
+          type: string
+          example: '12345'
+    Token:
+      type: object
+      properties:
+        auth_token:
+          type: string
+          example: "d0e39e73054cc2fd3dd00cd9a04156471afa9291"
+    
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
